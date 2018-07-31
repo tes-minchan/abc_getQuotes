@@ -1,0 +1,29 @@
+{
+  "name": "abc_getQuotes",
+  "version": "1.0.0",
+  "description": "Get market quotes daemons.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "NODE_PATH=daemons node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tes-minchan/abc_getQuotes.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tes-minchan/abc_getQuotes/issues"
+  },
+  "homepage": "https://github.com/tes-minchan/abc_getQuotes#readme",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "cheerio-httpcli": "^0.7.3",
+    "redis": "^2.8.0",
+    "sleep": "^5.2.2",
+    "underscore": "^1.9.1",
+    "ws-reconnect": "^1.0.5"
+  }
+}
