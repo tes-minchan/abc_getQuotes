@@ -4,8 +4,8 @@ Get market quotes daemons.
 # Supported Market
 
 | Market   | TYPE      | URL           |
-| -------- | --------- | https://docs.upbit.com/docs |
-| UPBIT    | WEBSOCKET | ------------- |
+| -------- | --------- | ------------- |
+| UPBIT    | WEBSOCKET | https://docs.upbit.com/docs |
 | COINONE  | WEBSOCKET | ------------- |
 | BITHUMB  | REST      | ------------- |
 | GOPAX    | REST      | ------------- |
