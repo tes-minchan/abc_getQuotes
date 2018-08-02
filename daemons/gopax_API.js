@@ -1,43 +1,57 @@
 /*
-* https://api.gopax.co.kr/trading-pairs/BTC-KRW/book
+ *   *====*====*===*====*====*====*====*====*====*====*====*====*====*====*====*
+ *                               GOPAX REST API
+ *   GENERAL DESCRIPTION
+ *     Get quotes from REST API.
+ *     currencyList 변수에 코인 통화쌍을 추가하면 해당 코인 가격을 Redis Table에 저장함.
+ *
+ *   REFERENCE WEBSITE
+ *     https://gopaxapi.github.io/gopax/
+ *     Limit : 20 req per 1sec.
+ * 
+ *   SUPPORTED CURRENCY
+ *     Refer to https://api.gopax.co.kr/trading-pairs
+ * 
+ *   CREATED DATE, 2018.08.01
+ *   *====*====*===*====*====*====*====*====*====*====*====*====*====*====*====*
 */
 
-let axios  = require('axios');
-let Redis  = require('redis');
-let _      = require('underscore');
-var config = require('../config');
+const axios  = require('axios');
+const Redis  = require('redis');
+const config = require('../config');
 
 const market = 'GOPAX';
-
+const currencyList   = [ 'BTC-KRW', 'ETH-KRW', 'XRP-KRW', 'EOS-KRW', 'LOOM-KRW', 'ZRX-KRW'];
+const redisTableList = [ 'BTCKRW', 'ETHKRW', 'XRPKRW', 'EOSKRW', 'LOOMKRW', 'ZRXKRW'];
 
 function gopax_API () {
-  console.log(market + ' REST API Start.');
+  console.log(`${market} REST API Start.`);
 
   // connect to redis server.
   let redisClient = Redis.createClient(config.redisConfig);
-  let REDIS_ASK_HNAME = market + '_BTCKRW_ASK';
-  let REDIS_BID_HNAME = market + '_BTCKRW_BID';
 
-  this.getOrderbook = function() {
-    setInterval(function(){
+  this.getOrderbook = (CURRENCY) => {
+    setInterval(() => {
 
-      axios.get('https://api.gopax.co.kr/trading-pairs/BTC-KRW/book')
-      .then(function(response) {
+      axios.get(`https://api.gopax.co.kr/trading-pairs/${CURRENCY}/book`)
+      .then(response => {
+        let toSaveRedis = redisTableList[currencyList.indexOf(CURRENCY)];
+        let REDIS_ASK_HNAME = `${market}_${toSaveRedis}_ASK`;
+        let REDIS_BID_HNAME = `${market}_${toSaveRedis}_BID`;
 
-        redisClient.del(REDIS_ASK_HNAME);
-        redisClient.del(REDIS_BID_HNAME);
-
-        if(response.data.ask.length > 0) {
-          for(var index = 0; index < 10; index++) {
-            let ask_orderbook = response.data.ask[index];
-            let bid_orderbook = response.data.bid[index];
-  
-            redisClient.hset(REDIS_ASK_HNAME,ask_orderbook[1],ask_orderbook[2]);
-            redisClient.hset(REDIS_BID_HNAME,bid_orderbook[1],bid_orderbook[2]);
-  
+        response.data.ask.map((item, index) => {
+          if(index > 20) {
+            return;
           }
-        }
+          redisClient.hset(REDIS_ASK_HNAME,item[1],item[2]);
+        });
 
+        response.data.bid.map((item, index) => {
+          if(index > 20) {
+            return;
+          }
+          redisClient.hset(REDIS_BID_HNAME,item[1],item[2]);
+        });
 
       });
 
@@ -45,7 +59,5 @@ function gopax_API () {
   }
 
 }
-
-
 
 module.exports = gopax_API

@@ -1,4 +1,19 @@
-// https://poloniex.com/public?command=returnOrderBook&currencyPair=USDT_BTC&depth=10
+/*
+ *   *====*====*===*====*====*====*====*====*====*====*====*====*====*====*====*
+ *                               POLONIEX REST API
+ *   GENERAL DESCRIPTION
+ *     Get quotes from REST API.
+ *     currencyList 변수에 코인 통화쌍을 추가하면 해당 코인 가격을 Redis Table에 저장함.
+ *
+ *   REFERENCE WEBSITE
+ *     https://poloniex.com/support/api/
+ *     Limit : 6 calls per second.
+ * 
+ *   SUPPORTED CURRENCY
+ * 
+ *   CREATED DATE, 2018.08.01
+ *   *====*====*===*====*====*====*====*====*====*====*====*====*====*====*====*
+*/
 
 let axios  = require('axios');
 let Redis  = require('redis');
@@ -26,13 +41,14 @@ function poloniex_API () {
         redisClient.del(REDIS_ASK_HNAME);
         redisClient.del(REDIS_BID_HNAME);
 
-        _.map(orderbook_BTCKRW.asks, function(item) {
+        orderbook_BTCKRW.asks.map(item => {
           redisClient.hset(REDIS_ASK_HNAME,item[0],item[1]);
         });
 
-        _.map(orderbook_BTCKRW.bids, function(item) {
+        orderbook_BTCKRW.bids = orderbook_BTCKRW.bids.reverse();
+        orderbook_BTCKRW.bids.map(item => {
           redisClient.hset(REDIS_BID_HNAME,item[0],item[1]);
-        });
+        })
 
       });
 

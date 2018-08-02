@@ -21,6 +21,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "cheerio-httpcli": "^0.7.3",
+    "npm": "^6.2.0",
     "redis": "^2.8.0",
     "sleep": "^5.2.2",
     "underscore": "^1.9.1",

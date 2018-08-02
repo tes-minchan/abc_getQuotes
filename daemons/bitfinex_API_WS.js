@@ -1,51 +1,56 @@
-let _ = require('underscore');
-let Redis = require('redis');
-var WSCLINET = require('ws-reconnect');
-var wsclient = new WSCLINET("wss://api.bitfinex.com/ws/2");
-var config = require('../config');
+/*
+ *   *====*====*===*====*====*====*====*====*====*====*====*====*====*====*====*
+ *                               BITFINEX WEBSOCKET API
+ *   GENERAL DESCRIPTION
+ *     Get quotes from websocket.
+ *     currencyList 변수에 코인 통화쌍을 추가하면 해당 통화를 subscribe하고 가격을 받아옴. 
+ * 
+ *   REFERENCE WEBSITE
+ *     https://docs.bitfinex.com/docs
+ * 
+ *   SUPPORTED CURRENCY
+ * 
+ *   CREATED DATE, 2018.08.01
+ *   *====*====*===*====*====*====*====*====*====*====*====*====*====*====*====*
+*/
+
+const _ = require('underscore');
+const sleep = require('sleep');
+const Redis = require('redis');
+const WSCLINET = require('ws-reconnect');
+const wsclient = new WSCLINET("wss://api.bitfinex.com/ws/2");
+const config = require('../config');
 
 const market = 'BITFINEX';
+const currencyList   = [ 'tBTCUSD', 'tETHUSD', 'tEOSUSD', 'tXRPUSD', 'tZRXUSD'];
+// const redisTableList = [ 'BTCUSD', 'ETHUSD', 'EOSUSD', 'XRPUSD', 'ZRXUSD' ];
 
 function bitfinex_API () {
 
   // connect to redis server.
   let redisClient = Redis.createClient(config.redisConfig);
-
-  let REDIS_ASK_HNAME = market + '_BTCKRW_ASK';
-  let REDIS_BID_HNAME = market + '_BTCKRW_BID';
-
+  let currencyInfo = {};
   
-  redisClient.del(REDIS_ASK_HNAME);
-  redisClient.del(REDIS_BID_HNAME);
   // websocket methods.
-  this.connect = function(enable_save) {
+  this.connect = function() {
+
     // websocket client start.
     wsclient.start();
 
     wsclient.on("connect",function(connection) {
-      console.log(market + ' Websocket Client Connected');
+      console.log(`${market} Websocket Client Connected, [${currencyList}]`);
 
-      var ticket = {
-        "event"  : "subscribe",
-        "channel" : "book",
-        "pair"    : "BTCUSD",
-        "prec"    : "R0"
-      }
-      var ticket2 = {
-        "event": "subscribe",
-        "channel": "book",
-        "symbol": ["tBTCUSD","ASK"],
-        "prec": "P0",
-        "freq": "F0",
-        "len": 25
-      }
-      let msg = JSON.stringify({ 
-        event: 'subscribe', 
-        channel: 'book', 
-        symbol: 'tBTCUSD' 
-      })
+      currencyList.map(currency => {
+        let msg = JSON.stringify({ 
+          event: 'subscribe', 
+          channel: 'book', 
+          symbol: currency
+        })
+  
+        wsclient.socket.send(msg);
+        sleep.msleep(200);
+      });
 
-      wsclient.socket.send(msg);
 
     });
 
@@ -60,87 +65,101 @@ function bitfinex_API () {
     wsclient.on("message",function(data) {
       var parseJson = JSON.parse(data.toString());
 
-      if(parseJson[1] === undefined || parseJson[1] === 'hb') {
+      if(parseJson.event === 'subscribed') {
+        // Setting currency infor
+        currencyInfo[parseJson.chanId] = (parseJson);
+      }
+      else if(parseJson.event === 'info' || parseJson[1] === 'hb') {
         return;
       }
-
-      let ObjLength = Object.keys(parseJson[1]).length;;
-
-
-      // redisClient.hset(REDIS_ASK_HNAME,'8172.2','1.3');
-
-
-
-      if(ObjLength > 3) {
-        // Init orderbooks.
-
-        parseJson.map((getData,index) => {
-          if(index == 1) {
-            getData.map(orderbook => {
-              if(orderbook[2] > 0) {
-                redisClient.hset(REDIS_BID_HNAME,orderbook[0],orderbook[2]);
-              }
-              else {
-                redisClient.hset(REDIS_ASK_HNAME,orderbook[0],orderbook[2]);
-              }
-            })
-          }
-        });
-
-        
+      else if(Object.keys(parseJson[1]).length > 10){
+        // Init orderbooks.        
+        this._initRedisTable(redisClient, currencyInfo[parseJson[0]].pair, parseJson[1]);
       }
       else {
-        // Update orderbook.
-        let getOrderbook = parseJson[1];
-        let [price,count,amount] = [getOrderbook[0],getOrderbook[1],getOrderbook[2]];
-
-        // when count > 0 then you have to add or update the price level
-        if(count > 0) {
-          /*
-          *  if amount > 0 then add/update bids
-          *  if amount < 0 then add/update asks
-          */
-         if(amount > 0) {
-          redisClient.hget(REDIS_BID_HNAME,price,(err, result) => {
-            if(result) {
-              redisClient.hset(REDIS_BID_HNAME,price,amount);
-            }
-            else {
-              redisClient.hset(REDIS_BID_HNAME,price,amount);
-
-            }
-          });
-         }
-         else {
-          redisClient.hget(REDIS_ASK_HNAME,price,(err, result) => {
-            if(result) {
-              redisClient.hset(REDIS_ASK_HNAME,price,amount);
-            }
-            else {
-              redisClient.hset(REDIS_ASK_HNAME,price,amount);
-            }
-          });
-         }
-        }
-        // when count = 0 then you have to delete the price level.
-        else {
-          /*
-          *  if amount = 1 then remove from bids
-          *  if amount = -1 then remove from asks
-          */
-         if(amount == 1) {
-           redisClient.hdel(REDIS_BID_HNAME, price,redisClient.print);
-         }
-         else {
-           redisClient.hdel(REDIS_ASK_HNAME, price, redisClient.print);
-         }
-        }
-
+        // Update orderbooks.        
+        this._updateRedisTable(redisClient, currencyInfo[parseJson[0]].pair, parseJson[1]);
       }
-
     });
   }  
 
+  this._initRedisTable = (redisClient, currency, orderbook) => {
+
+    let REDIS_ASK_HNAME = `${market}_${currency}_ASK`;
+    let REDIS_BID_HNAME = `${market}_${currency}_BID`;
+    
+    redisClient.del(REDIS_ASK_HNAME);
+    redisClient.del(REDIS_BID_HNAME);
+  
+    orderbook.map(item => {
+      if(item[2] > 0) {
+        redisClient.hset(REDIS_BID_HNAME,item[0],item[2]);
+      }
+      else {
+        redisClient.hset(REDIS_ASK_HNAME,item[0],Math.abs(item[2]));
+      }
+    });
+  
+  }
+  
+  this._updateRedisTable = (redisClient, currency, orderbook) => {
+  
+    let REDIS_ASK_HNAME = `${market}_${currency}_ASK`;
+    let REDIS_BID_HNAME = `${market}_${currency}_BID`;
+    
+    // Update orderbook.
+    let [price,count,amount] = [orderbook[0], orderbook[1], orderbook[2]];
+  
+    // when count > 0 then you have to add or update the price level
+    if(count > 0) {
+      /*
+      *  if amount > 0 then add/update bids
+      *  if amount < 0 then add/update asks
+      */
+      if(amount > 0) {
+      redisClient.hget(REDIS_BID_HNAME,price,(err, result) => {
+        if(result) {
+          redisClient.hset(REDIS_BID_HNAME,price,amount);
+        }
+        else {
+          redisClient.hset(REDIS_BID_HNAME,price,amount);
+  
+        }
+      });
+      }
+      else {
+      redisClient.hget(REDIS_ASK_HNAME,price,(err, result) => {
+        if(result) {
+          redisClient.hset(REDIS_ASK_HNAME,price,Math.abs(amount));
+        }
+        else {
+          redisClient.hset(REDIS_ASK_HNAME,price,Math.abs(amount));
+        }
+      });
+      }
+    }
+    // when count = 0 then you have to delete the price level.
+    else {
+      /*
+      *  if amount = 1 then remove from bids
+      *  if amount = -1 then remove from asks
+      */
+      if(amount == 1) {
+        redisClient.hdel(REDIS_BID_HNAME, price);
+      }
+      else {
+        redisClient.hdel(REDIS_ASK_HNAME, price);
+      }
+    }
+  
+  }
+
+
+  
 }
+
+
+
+
 
 module.exports = bitfinex_API
