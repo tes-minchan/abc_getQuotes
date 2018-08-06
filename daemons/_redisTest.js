@@ -7,7 +7,7 @@ let redisClient = Redis.createClient(config.redisConfig);
 getRedis = () => {
   setInterval(()=> {
 
-    redisClient.hgetall('POLONIEX_XRPUSD_ASK',(error, result) => {
+    redisClient.hgetall('BITFINEX_XRPUSD_ASK',(error, result) => {
       let price  = Object.keys(result);
       price = price.sort((a,b) => a - b);
       console.log("*****************************");
@@ -15,7 +15,7 @@ getRedis = () => {
       console.log(price[1], result[price[1]]);
       console.log("=============================");
     });
-    redisClient.hgetall('POLONIEX_XRPUSD_BID',(error, result) => {
+    redisClient.hgetall('BITFINEX_XRPUSD_BID',(error, result) => {
       let price  = Object.keys(result);
       price = price.sort((a,b) => b - a);
       console.log(price[0], result[price[0]]);

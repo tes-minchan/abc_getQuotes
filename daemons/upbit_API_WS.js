@@ -72,7 +72,7 @@ function upbit_API () {
       var parseJson = JSON.parse(data.toString());
 
       // Get to save redis table name.
-      let toSaveRedis = redisTableList[currencyList.indexOf(parseJson.market)];
+      let toSaveRedis = redisTableList[currencyList.indexOf(parseJson.code)];
 
       // set to save redis hash table name.
       let REDIS_ASK_HNAME = market + '_' + toSaveRedis + '_ASK';

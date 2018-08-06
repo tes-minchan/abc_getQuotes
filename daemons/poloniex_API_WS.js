@@ -50,7 +50,7 @@ function poloniex_API () {
   const redisClient = Redis.createClient(config.redisConfig);
 
   this.connect = () => {
-    
+
     // websocket client start.
     wsclient.start();
 
@@ -76,7 +76,7 @@ function poloniex_API () {
     wsclient.on("message",(data) => {
       let parseJson = JSON.parse(data);
       let [code, timestamp, orderbook] = [parseJson[0],parseJson[1],parseJson[2]]
-      
+
       if(code === 1010) {
         // Hearbeat
         return;
@@ -100,7 +100,6 @@ function poloniex_API () {
 
 
   }
-
 
   this._initRedisTable = (redisClient, currency, askOrderbook, bidOrderbook) => {
 

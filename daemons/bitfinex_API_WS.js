@@ -30,14 +30,14 @@ function bitfinex_API () {
   // connect to redis server.
   let redisClient = Redis.createClient(config.redisConfig);
   let currencyInfo = {};
-  
+
   // websocket methods.
-  this.connect = function() {
+  this.connect = () => {
 
     // websocket client start.
     wsclient.start();
 
-    wsclient.on("connect",function(connection) {
+    wsclient.on("connect",(connection) => {
       console.log(`${market} Websocket Client Connected, [${currencyList}]`);
 
       currencyList.map(currency => {
@@ -54,15 +54,15 @@ function bitfinex_API () {
 
     });
 
-    wsclient.on("destroyed",function() {
+    wsclient.on("destroyed",() => {
       console.log("destroyed");
     });
 
-    wsclient.on("reconnect",function() {
+    wsclient.on("reconnect",() => {
       console.log("reconnecting");
     });
 
-    wsclient.on("message",function(data) {
+    wsclient.on("message",(data) => {
       var parseJson = JSON.parse(data.toString());
 
       if(parseJson.event === 'subscribed') {
@@ -73,7 +73,7 @@ function bitfinex_API () {
         return;
       }
       else if(Object.keys(parseJson[1]).length > 10){
-        // Init orderbooks.        
+        // Init orderbooks.       
         this._initRedisTable(redisClient, currencyInfo[parseJson[0]].pair, parseJson[1]);
       }
       else {

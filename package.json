@@ -2,10 +2,10 @@
   "name": "abc_getQuotes",
   "version": "1.0.0",
   "description": "Get market quotes daemons.",
-  "main": "app.js",
+  "main": "getquotes.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "getquotes": "NODE_PATH=daemons node getquotes.js"
+    "start": "NODE_PATH=daemons node getquotes.js"
   },
   "repository": {
     "type": "git",
