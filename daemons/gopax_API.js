@@ -38,6 +38,9 @@ function gopax_API () {
         let toSaveRedis = redisTableList[currencyList.indexOf(CURRENCY)];
         let REDIS_ASK_HNAME = `${market}_${toSaveRedis}_ASK`;
         let REDIS_BID_HNAME = `${market}_${toSaveRedis}_BID`;
+        
+        redisClient.del(REDIS_ASK_HNAME);
+        redisClient.del(REDIS_BID_HNAME);
 
         response.data.ask.map((item, index) => {
           if(index > 20) {

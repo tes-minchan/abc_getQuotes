@@ -1,13 +1,14 @@
-let BithumbAPI   = require('bithumb_API');
-let KorbitAPI    = require('korbit_API');
-let GopaxAPI     = require('gopax_API');
-let CoinnestAPI  = require('coinnest_API');
-let ExchangesAPI = require('exchanges_API');
-let PoloniexAPI  = require('poloniex_API_WS');
-let BitfinexAPI  = require('bitfinex_API_WS');
-let BitflyerAPI  = require('bitflyer_API_WS');
-let CoinoneAPI   = require('coinone_API_WS');
-let UpbitAPI     = require('upbit_API_WS');
+let BithumbAPI    = require('bithumb_API');
+let KorbitAPI     = require('korbit_API');
+let GopaxAPI      = require('gopax_API');
+let CoinnestAPI   = require('coinnest_API');
+let ExchangesAPI  = require('exchanges_API');
+let PoloniexAPI   = require('poloniex_API_WS');
+let BitfinexAPI   = require('bitfinex_API_WS');
+let BitflyerAPI   = require('bitflyer_API_WS');
+let CoinoneAPI    = require('coinone_API_WS');
+let UpbitAPI      = require('upbit_API_WS');
+let CashierestAPI = require('cashierest_API_WS');
 
 // COINONE, UPBIT, BITHUMB, KORBIT, GOPAX, BITFINEX, POLONIEX DONE !!!
 
@@ -25,6 +26,9 @@ coinoneAPI.connect('ZRX');
 var upbitAPI = new UpbitAPI();
 upbitAPI.connect();
 
+var cashierestAPI = new CashierestAPI();
+cashierestAPI.connect();
+
 // var bitfinexAPI = new BitfinexAPI();
 // bitfinexAPI.connect();
 
@@ -35,8 +39,8 @@ upbitAPI.connect();
   **** REST API GET ****
 */
 
-var bithumbAPI = new BithumbAPI();
-bithumbAPI.getOrderbook();
+// var bithumbAPI = new BithumbAPI();
+// bithumbAPI.getOrderbook();
 
 var korbitAPI = new KorbitAPI();
 korbitAPI.getOrderbook('btc_krw');
