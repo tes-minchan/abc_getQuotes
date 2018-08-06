@@ -83,17 +83,17 @@ class Arbitrage {
         if(type === "ASK") {
 
           if(index === 0){
-            toSellMarket.market = market;
-            toSellMarket.maxAsk = price[0];
-            toSellMarket.volume = result[index][price[0]];
+            toBuyMarket.market = market;
+            toBuyMarket.minAsk = price[0];
+            toBuyMarket.volume = result[index][price[0]];
           }
           else {
 
             // Max Ask to sell
-            if( price[0] > toSellMarket.maxAsk ) {
-              toSellMarket.market = market;
-              toSellMarket.maxAsk = price[0];
-              toSellMarket.volume = result[index][price[0]];
+            if( price[0] < toBuyMarket.minAsk ) {
+              toBuyMarket.market = market;
+              toBuyMarket.minAsk = price[0];
+              toBuyMarket.volume = result[index][price[0]];
 
             }
           }
@@ -103,16 +103,16 @@ class Arbitrage {
           let [price_length, volume_length] = [price.length-1,volume.length-1];
 
           if(index === 1) {
-            toBuyMarket.market = market;
-            toBuyMarket.minBid = price[price_length];
-            toBuyMarket.volume = volume[volume_length];
+            toSellMarket.market = market;
+            toSellMarket.maxBid = price[price_length];
+            toSellMarket.volume = volume[volume_length];
           }
           else {
             // Min Bid to buy.
-            if( price[price_length] < toBuyMarket.minBid ) {
-              toBuyMarket.market = market;
-              toBuyMarket.minBid = price[price_length];
-              toBuyMarket.volume = volume[volume_length];
+            if( price[price_length] > toSellMarket.maxBid ) {
+              toSellMarket.market = market;
+              toSellMarket.maxBid = price[price_length];
+              toSellMarket.volume = volume[volume_length];
             }
           }
         }

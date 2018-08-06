@@ -39,8 +39,8 @@ cashierestAPI.connect();
   **** REST API GET ****
 */
 
-// var bithumbAPI = new BithumbAPI();
-// bithumbAPI.getOrderbook();
+var bithumbAPI = new BithumbAPI();
+bithumbAPI.getOrderbook();
 
 var korbitAPI = new KorbitAPI();
 korbitAPI.getOrderbook('btc_krw');
