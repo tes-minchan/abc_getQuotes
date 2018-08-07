@@ -41,6 +41,9 @@ function korbit_API () {
         let REDIS_ASK_HNAME = `${market}_${toSaveRedis}_ASK`;
         let REDIS_BID_HNAME = `${market}_${toSaveRedis}_BID`;
 
+        redisClient.del(REDIS_ASK_HNAME);
+        redisClient.del(REDIS_BID_HNAME);
+
         response.data.asks.map(item => {
           redisClient.hset(REDIS_ASK_HNAME,item[0],item[1]);
         });
