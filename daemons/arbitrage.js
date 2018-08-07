@@ -54,13 +54,13 @@ class Arbitrage {
 
     let toBuyMarket = {
       market : "",
-      maxAsk : 0,
+      minAsk : 0,
       volume : 0
     };
 
     let toSellMarket = {
       market : "",
-      minBid : 0,
+      maxBid : 0,
       volume : 0
     };
 

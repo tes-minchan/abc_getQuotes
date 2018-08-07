@@ -19,9 +19,11 @@
   },
   "homepage": "https://github.com/tes-minchan/abc_getQuotes#readme",
   "dependencies": {
+    "async": "^2.6.1",
     "axios": "^0.18.0",
     "cheerio-httpcli": "^0.7.3",
-    "npm": "^6.2.0",
+    "mysql": "^2.16.0",
+    "npm": "^6.3.0",
     "redis": "^2.8.0",
     "sleep": "^5.2.2",
     "underscore": "^1.9.1",
