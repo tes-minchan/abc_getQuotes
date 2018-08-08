@@ -90,7 +90,7 @@ class Arbitrage {
           else {
 
             // Max Ask to sell
-            if( price[0] < toBuyMarket.minAsk ) {
+            if( Number(price[0]) < Number(toBuyMarket.minAsk) ) {
               toBuyMarket.market = market;
               toBuyMarket.minAsk = price[0];
               toBuyMarket.volume = result[index][price[0]];
@@ -109,7 +109,7 @@ class Arbitrage {
           }
           else {
             // Min Bid to buy.
-            if( price[price_length] > toSellMarket.maxBid ) {
+            if( Number(price[price_length]) > Number(toSellMarket.maxBid) ) {
               toSellMarket.market = market;
               toSellMarket.maxBid = price[price_length];
               toSellMarket.volume = volume[volume_length];
@@ -123,6 +123,7 @@ class Arbitrage {
         buy  : toBuyMarket,
         sell : toSellMarket
       };
+      console.log(toSaveRedis);
 
       redisClient.hset("arbitrage",currency, JSON.stringify(toSaveRedis));
 
