@@ -123,7 +123,6 @@ class Arbitrage {
         buy  : toBuyMarket,
         sell : toSellMarket
       };
-      console.log(toSaveRedis);
 
       redisClient.hset("arbitrage",currency, JSON.stringify(toSaveRedis));
 
