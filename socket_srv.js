@@ -36,13 +36,15 @@ wss.on('connection', function connection(ws) {
   setInterval(function() {
     if(ws.readyState === 1) {
 
+      const subscribe_coinlist = ws.subscribe;
+
       let response = {
         type       : 'update'
       };
 
       _checkMarketDown(function(marketCheck) {
         response['status']    = marketCheck
-        _getArbitrage( function(result) {
+        _getArbitrage(subscribe_coinlist, function(result) {
           response['orderbook'] = result;
           ws.send(JSON.stringify(response));
         });
@@ -51,7 +53,7 @@ wss.on('connection', function connection(ws) {
 
     }
 
-  },1000);
+  },400);
   
 });
 
@@ -145,25 +147,26 @@ function _checkOnMessage(ws, message) {
   }
   else if(type === 'update') {
 
-    let response = {
-      type       : 'update'
-    };
-
-    _getArbitrage( function(result) {
-      response['orderbook'] = result;
-      ws.send(JSON.stringify(response));
-    });
+    ws.subscribe = message.subscribe;
 
   }
 
 }
 
-function _getArbitrage(cb) {
-  let coinList = _initCoinList();
+function _getArbitrage(subscribe_coinlist, cb) {
+  if(subscribe_coinlist) {
+    _processAsyncArr(subscribe_coinlist, function(result) {
+      cb(result)
+    });
+  }
+  else {
+    let coinList = _initCoinList();
+    _processAsyncArr(coinList, function(result) {
+      cb(result)
+    });
+  }
 
-  _processAsyncArr(coinList, function(result) {
-    cb(result)
-  });
+
 
 }
 
@@ -207,9 +210,6 @@ function _getCoinARB(coinInfo) {
       })
     });
   });
-
-
-
 }
 
 
