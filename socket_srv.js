@@ -34,6 +34,7 @@ wss.on('connection', function connection(ws) {
 
   // Send market quotes.
   setInterval(function() {
+
     if(ws.readyState === 1) {
 
       const subscribe_coinlist = ws.subscribe;
@@ -53,7 +54,7 @@ wss.on('connection', function connection(ws) {
 
     }
 
-  },500);
+  },100);
   
 });
 
@@ -146,7 +147,6 @@ function _checkOnMessage(ws, message) {
     ws.send(JSON.stringify(response));
   }
   else if(type === 'update') {
-
     ws.subscribe = message.subscribe;
   }
 
