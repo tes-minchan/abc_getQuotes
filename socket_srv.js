@@ -53,7 +53,7 @@ wss.on('connection', function connection(ws) {
 
     }
 
-  },400);
+  },500);
   
 });
 
@@ -148,13 +148,13 @@ function _checkOnMessage(ws, message) {
   else if(type === 'update') {
 
     ws.subscribe = message.subscribe;
-
   }
 
 }
 
 function _getArbitrage(subscribe_coinlist, cb) {
   if(subscribe_coinlist) {
+
     _processAsyncArr(subscribe_coinlist, function(result) {
       cb(result)
     });
@@ -182,16 +182,17 @@ async function _processAsyncArr(array, cb) {
 }
 
 function _getCoinARB(coinInfo) {
+
   return new Promise((resolve, reject)=> {
 
-    let askRedisTable = coinInfo.support_market.map(item => {
+    let askRedisTable = coinInfo.ASK.support_market.map(item => {
       return (`${item}_${coinInfo.name}KRW_ASK`);
     });
     askRedisTable = askRedisTable.map(askTable => {
       return ['hgetall', askTable];
     });
 
-    let bidRedisTable = coinInfo.support_market.map(item => {
+    let bidRedisTable = coinInfo.BID.support_market.map(item => {
       return (`${item}_${coinInfo.name}KRW_BID`);
     });
     bidRedisTable = bidRedisTable.map(bidTable => {
@@ -200,12 +201,14 @@ function _getCoinARB(coinInfo) {
 
     let toSendMsg = {};
     toSendMsg['COIN'] = coinInfo.name;
-    toSendMsg['COUNT'] = coinInfo.count;
+    toSendMsg['ASK_MARKET_COUNT'] = coinInfo.ASK.count;
+    toSendMsg['BID_MARKET_COUNT'] = coinInfo.BID.count;
+
 
     _getAskARB(askRedisTable, function(error, askARB) {
       toSendMsg['ASK'] = askARB;
       _getBidARB(bidRedisTable, function(error, bidARB) {
-        toSendMsg['BID'] = bidARB;
+        toSendMsg['BID'] = bidARB;        
         resolve(toSendMsg);
       })
     });
