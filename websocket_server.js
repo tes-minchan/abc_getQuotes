@@ -5,13 +5,11 @@ const bluebird = require('bluebird');
 const Config = require('./config');
 const MarketConfig = require("./config/market");
 const Redis = require('redis');
+const OrderbookController = require('./lib/websocket/controller');
 
 // enviroments setting.
 const redisClient = Redis.createClient(Config.redisConfig);
 bluebird.promisifyAll(Redis);
-
-// const supportCoin = _initCoinList();
-// console.log(supportCoin);
 
 // Process exception 
 process.on('uncaughtException', function (err) {
@@ -37,21 +35,31 @@ wss.on('connection', function connection(ws) {
 
     if(ws.readyState === 1) {
 
-      const subscribe_coinlist = ws.subscribe;
-
-      let response = {
-        type       : 'update'
-      };
-
-      _checkMarketDown(function(marketCheck) {
-        response['status']    = marketCheck
-        _getArbitrage(subscribe_coinlist, function(result) {
-          response['orderbook'] = result;
-          ws.send(JSON.stringify(response));
+      if(ws.subscribe_orderbook) {
+        // Orderbook subscribe
+        OrderbookController.getOrderbook(ws.subscribe_orderbook, function(result) {
+          OrderbookController.parseOrderbook(result, function(result) {
+            ws.send(JSON.stringify(result));
+          });
         });
-      });
+      }
+      else {
 
+        // Aritrage subscribe
+        const subscribe_coinlist = ws.subscribe;
 
+        let response = {
+          type       : 'update'
+        };
+  
+        _checkMarketDown(function(marketCheck) {
+          response['status']    = marketCheck
+          _getArbitrage(subscribe_coinlist, function(result) {
+            response['orderbook'] = result;
+            ws.send(JSON.stringify(response));
+          });
+        });
+      }
     }
 
   },100);
@@ -134,6 +142,7 @@ function _initCoinList() {
   return coinlist;
 }
 
+
 function _checkOnMessage(ws, message) {
 
   const type = message.channel;
@@ -149,8 +158,13 @@ function _checkOnMessage(ws, message) {
   else if(type === 'update') {
     ws.subscribe = message.subscribe;
   }
+  else if(type === 'subscribe_orderbook') {
+    ws.subscribe_orderbook = message.currency;
+  }
 
 }
+
+
 
 function _getArbitrage(subscribe_coinlist, cb) {
   if(subscribe_coinlist) {

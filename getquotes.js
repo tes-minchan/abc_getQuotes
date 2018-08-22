@@ -1,63 +1,77 @@
-let BithumbAPI    = require('bithumb_API');
-let KorbitAPI     = require('korbit_API');
-let GopaxAPI      = require('gopax_API');
-let CoinnestAPI   = require('coinnest_API');
-let ExchangesAPI  = require('exchanges_API');
-let PoloniexAPI   = require('poloniex_API_WS');
-let BitfinexAPI   = require('bitfinex_API_WS');
-let BitflyerAPI   = require('bitflyer_API_WS');
-let CoinoneAPI    = require('coinone_API_WS');
-let UpbitAPI      = require('upbit_API_WS');
-let CashierestAPI = require('cashierest_API_WS');
+const MARKET_CONFIG = require('./config/market');
+const Coinone     = require('./lib/quotes/Coinone');
+const Upbit       = require('./lib/quotes/Upbit');
+const Bithumb     = require('./lib/quotes/Bithumb');
+const Gopax       = require('./lib/quotes/Gopax');
+const Cashierest  = require('./lib/quotes/Cashierest');
 
-// COINONE, UPBIT, BITHUMB, KORBIT, GOPAX, BITFINEX, POLONIEX DONE !!!
 
-/*
-  **** Websocket API GET ****
-*/
+/**  
+  * @description 
+  * *** COINONE ORDERBOOK PARSING FROM WEBSOCKET.
+  * 
+  * @returns 
+  *   40 : response from server 
+  *   42 : orderbook
+*/ 
 
-var coinoneAPI = new CoinoneAPI();
-coinoneAPI.connect('BTC');
-coinoneAPI.connect('ETH');
-coinoneAPI.connect('EOS');
-coinoneAPI.connect('XRP');
-coinoneAPI.connect('ZRX');
 
-var upbitAPI = new UpbitAPI();
-upbitAPI.connect();
 
-var cashierestAPI = new CashierestAPI();
-cashierestAPI.connect();
+const coinone_ws = new Coinone();
+coinone_ws.checkHeartBeat();
 
-// var bitfinexAPI = new BitfinexAPI();
-// bitfinexAPI.connect();
+MARKET_CONFIG.COINONE.coin_list.forEach(coin => {
+  coinone_ws.connect(coin,'KRW');
+});
 
-// var poloniexAPI = new PoloniexAPI();
-// poloniexAPI.connect();
 
-/*
-  **** REST API GET ****
-*/
 
-var bithumbAPI = new BithumbAPI();
-bithumbAPI.getOrderbook();
+/**  
+  * @description 
+  * *** UPBIT ORDERBOOK PARSING FROM WEBSOCKET.
+  * BITHUMB, COINONE, GOPAX, CASHEREST에서 하나라도 지워하는 코인만 support
+  * @returns 
+*/ 
 
-var korbitAPI = new KorbitAPI();
-korbitAPI.getOrderbook('btc_krw');
-korbitAPI.getOrderbook('eth_krw');
-korbitAPI.getOrderbook('xrp_krw');
+const upbit_ws = new Upbit();
+upbit_ws.connect();
+upbit_ws.checkHeartBeat();
 
-var gopaxAPI = new GopaxAPI();
-gopaxAPI.getOrderbook('BTC-KRW');
-gopaxAPI.getOrderbook('ETH-KRW');
-gopaxAPI.getOrderbook('EOS-KRW');
-gopaxAPI.getOrderbook('XRP-KRW');
-gopaxAPI.getOrderbook('ZRX-KRW');
+/**  
+  * @description 
+  * *** CASHIEREST ORDERBOOK PARSING FROM WEBSOCKET.
+  * @returns 
+*/ 
 
-// var coinnestAPI = new CoinnestAPI();
-// coinnestAPI.getOrderbook();
+const cashierest_ws = new Cashierest();
+cashierest_ws.connect();
+cashierest_ws.checkHeartBeat();
 
-// var exchangesAPI = new ExchangesAPI();
-// exchangesAPI.getExchanges();
+
+/**  
+  * @description 
+  * *** BITHUMB ORDERBOOK PARSING FROM REST API.
+  * @returns 
+*/ 
+
+const bithumb_api = new Bithumb();
+bithumb_api.connect();
+
+/**  
+  * @description 
+  * *** GOPAX ORDERBOOK PARSING FROM REST API.
+  * @param {COIN_NAME}
+  * @returns 
+*/ 
+
+const gopax_api = new Gopax();
+MARKET_CONFIG.GOPAX.coin_list.forEach(coin => {
+  gopax_api.connect(coin);
+});
+
+
+
+
+
 
 
