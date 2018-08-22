@@ -33,36 +33,42 @@ wss.on('connection', function connection(ws) {
   // Send market quotes.
   setInterval(function() {
 
-    if(ws.readyState === 1) {
 
-      if(ws.subscribe_orderbook) {
-        // Orderbook subscribe
-        OrderbookController.getOrderbook(ws.subscribe_orderbook, function(result) {
-          OrderbookController.parseOrderbook(result, function(result) {
-            ws.send(JSON.stringify(result));
-          });
-        });
+    if(ws.subscribe_orderbook) {
+
+      // Orderbook subscribe
+      let response = {
+        type : 'orderbook',
+        data : null
       }
-      else {
 
-        // Aritrage subscribe
-        const subscribe_coinlist = ws.subscribe;
-
-        let response = {
-          type       : 'update'
-        };
-  
-        _checkMarketDown(function(marketCheck) {
-          response['status']    = marketCheck
-          _getArbitrage(subscribe_coinlist, function(result) {
-            response['orderbook'] = result;
+      OrderbookController.getOrderbook(ws.subscribe_orderbook, function(result) {
+        OrderbookController.parseOrderbook(result, function(result) {
+          response.data = result;
+          if(ws.readyState === 1) {
             ws.send(JSON.stringify(response));
-          });
+          }
         });
-      }
+      });
     }
+    else if (ws.subscribe_dashboard) {
 
-  },100);
+      // Aritrage subscribe
+      const subscribe_coinlist = ws.subscribe_dashboard;
+
+      let response = {
+        type       : 'update_dashboard'
+      };
+      _getArbitrage(subscribe_coinlist, function(result) {
+        response['orderbook'] = result;
+        if(ws.readyState === 1) {
+          ws.send(JSON.stringify(response));
+        }
+      });
+    }
+    
+
+  },1000);
   
 });
 
@@ -146,37 +152,72 @@ function _initCoinList() {
 function _checkOnMessage(ws, message) {
 
   const type = message.channel;
-  if(type === 'init') {
+
+  if(type === 'init_dashboard') {
     let response = {
-      type       : 'init',
+      type       : 'init_dashboard',
       marketList : Config.marketInfo.krw_market,
       coinList   : _initCoinList()
     };
 
     ws.send(JSON.stringify(response));
   }
-  else if(type === 'update') {
-    ws.subscribe = message.subscribe;
+  else if(type === 'update_dashboard') {
+    ws.subscribe_dashboard = message.subscribe;
   }
   else if(type === 'subscribe_orderbook') {
     ws.subscribe_orderbook = message.currency;
   }
+  else if(type === 'market_status') {
 
+    let response = {
+      type : 'market_status',
+      status : null
+    };
+
+    _getMarketStatus(result => {
+      response.status = result;
+      ws.send(JSON.stringify(response));
+
+    });
+
+
+
+  }
 }
 
+function _getMarketStatus(callback) {
+  let checkRedisTable = [];
+  let checkResult = [];
 
+  Config.marketInfo.krw_market.map(market => {
+    checkRedisTable.push(['get',`${market}_HEARTBEAT`]);
+  });
 
-function _getArbitrage(subscribe_coinlist, cb) {
+  redisClient.multi(checkRedisTable).exec((error, values) => {
+    values.forEach((result,index) => {
+      checkResult.push({
+        market : checkRedisTable[index][1].split('_')[0],
+        status : result
+      });
+    });
+
+    callback(checkResult);
+
+  });
+}
+
+function _getArbitrage(subscribe_coinlist, callback) {
   if(subscribe_coinlist) {
-
     _processAsyncArr(subscribe_coinlist, function(result) {
-      cb(result)
+      callback(result)
     });
   }
   else {
+
     let coinList = _initCoinList();
     _processAsyncArr(coinList, function(result) {
-      cb(result)
+      callback(result)
     });
   }
 
@@ -184,7 +225,7 @@ function _getArbitrage(subscribe_coinlist, cb) {
 
 }
 
-async function _processAsyncArr(array, cb) {
+async function _processAsyncArr(array, callback) {
 
   let arbList = [];
   for(const item of array) {
@@ -192,13 +233,13 @@ async function _processAsyncArr(array, cb) {
     arbList.push(result);
   }
 
-  cb(arbList)
+  callback(arbList)
 }
 
 function _getCoinARB(coinInfo) {
 
   return new Promise((resolve, reject)=> {
-
+    // console.log(coinInfo)
     let askRedisTable = coinInfo.ASK.support_market.map(item => {
       return (`${item}_${coinInfo.name}KRW_ASK`);
     });
@@ -222,15 +263,21 @@ function _getCoinARB(coinInfo) {
     _getAskARB(askRedisTable, function(error, askARB) {
       toSendMsg['ASK'] = askARB;
       _getBidARB(bidRedisTable, function(error, bidARB) {
-        toSendMsg['BID'] = bidARB;        
-        resolve(toSendMsg);
+        toSendMsg['BID'] = bidARB;  
+        if(toSendMsg) {
+
+          resolve(toSendMsg);
+        } 
+        else {
+          reject(null);
+        }     
       })
     });
   });
 }
 
 
-function _getAskARB(redis_table, cb) {
+function _getAskARB(redis_table, callback) {
 
   let toBuyMarket = {
     market : "",
@@ -264,12 +311,12 @@ function _getAskARB(redis_table, cb) {
       }
     }
 
-    cb(null, toBuyMarket);
+    callback(null, toBuyMarket);
   });
 }
 
 
-function _getBidARB(redis_table, cb) {
+function _getBidARB(redis_table, callback) {
 
   let toSellMarket = {
     market : null,
@@ -304,7 +351,7 @@ function _getBidARB(redis_table, cb) {
       }
 
     }
-    cb(null, toSellMarket);   
+    callback(null, toSellMarket);   
 
 
   });
