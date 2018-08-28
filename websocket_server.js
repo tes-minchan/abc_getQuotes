@@ -34,7 +34,7 @@ wss.on('connection', function connection(ws) {
   setInterval(function() {
 
 
-    if(ws.subscribe_orderbook) {
+    if(ws.subscribe_orderbook_coin) {
 
       // Orderbook subscribe
       let response = {
@@ -42,8 +42,8 @@ wss.on('connection', function connection(ws) {
         data : null
       }
 
-      OrderbookController.getOrderbook(ws.subscribe_orderbook, function(result) {
-        OrderbookController.parseOrderbook(result, function(result) {
+      OrderbookController.getOrderbook(ws.subscribe_orderbook_coin, function(result) {
+        OrderbookController.parseOrderbook(result, ws.subscribe_market, function(result) {
           response.data = result;
           if(ws.readyState === 1) {
             ws.send(JSON.stringify(response));
@@ -166,7 +166,10 @@ function _checkOnMessage(ws, message) {
     ws.subscribe_dashboard = message.subscribe;
   }
   else if(type === 'subscribe_orderbook') {
-    ws.subscribe_orderbook = message.currency;
+
+    ws.subscribe_orderbook_coin = message.currency;
+    ws.subscribe_market         = message.subscribe_market;
+    console.log(message.subscribe_market);
   }
   else if(type === 'market_status') {
 
